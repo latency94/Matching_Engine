@@ -16,25 +16,29 @@ enum class OrderStatus
 
 struct Order
 {
-    int orderId;
-    Side side;
-    int price;
-    int quantity;
-    long long timestamp;
+    int orderId{};
+    Side side{};
+    int price{};
+    int quantity{};
+    long long timestamp{};
 
-    bool active = true;   // 🔥 NEW
-    OrderStatus status;
+    bool active{true};
+    OrderStatus status{OrderStatus::ACTIVE};
 
     Order() = default;
 
-    Order(int id, Side s, int p, int q, long long ts)
+    Order(
+        int id,
+        Side s,
+        int p,
+        int q,
+        long long ts
+    )
         : orderId(id),
           side(s),
           price(p),
           quantity(q),
-          timestamp(ts),
-          active(true),
-          status(OrderStatus::ACTIVE)
-    {}
-
+          timestamp(ts)
+    {
+    }
 };
