@@ -51,4 +51,5 @@ public:
     void printBook();
 
     void printTrades();
+    void printOrder(int orderId);
 };

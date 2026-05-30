@@ -1,10 +1,21 @@
 #include "../include/OrderBook.h"
+#include "../include/Trade.h"
 
 #include <iostream>
 #include <algorithm>
 
 void OrderBook::addOrder(const Order& order)
 {
+    if(orderMap.find(order.orderId) != orderMap.end())
+    {
+        std::cout
+            << "ERROR: Order ID "
+            << order.orderId
+            << " already exists\n";
+
+        return;
+    }
+
     orderMap[order.orderId] = order;
 
     if(order.side == Side::BUY)
@@ -76,11 +87,27 @@ void OrderBook::matchOrders()
             continue;
         }
 
-        if(buy.price < sell.price)
-            break;
+        bool canMatch = false;
 
-        int qty = std::min(buy.quantity, sell.quantity);
+    if(buy.type == OrderType::MARKET ||
+    sell.type == OrderType::MARKET)
+    {
+        canMatch = true;
+    }
+    else if(buy.price >= sell.price)
+    {
+        canMatch = true;
+    }
 
+    if(!canMatch)
+    {
+        break;
+    }
+
+    int qty = std::min(
+        buy.quantity,
+        sell.quantity
+    );
         std::cout
             << "TRADE "
             << qty
@@ -92,7 +119,12 @@ void OrderBook::matchOrders()
 
         t.buyOrderId = buy.orderId;
         t.sellOrderId = sell.orderId;
+        if(buy.type == OrderType::MARKET)
         t.price = sell.price;
+        else if(sell.type == OrderType::MARKET)
+        t.price = buy.price;
+        else
+    t.price = sell.price;
         t.quantity = qty;
         t.timestamp =
             std::max(buy.timestamp,
@@ -161,10 +193,89 @@ void OrderBook::printTrades()
     for(const auto& t : tradeHistory)
     {
         std::cout
-            << "BUY=" << t.buyOrderId
-            << " SELL=" << t.sellOrderId
-            << " PRICE=" << t.price
-            << " QTY=" << t.quantity
+    << "TRADE "
+    << t.quantity
+    << " @ "
+    << t.price
+    << std::endl;
+    }
+}
+
+void OrderBook::printBook()
+{
+    std::cout << "\n========== ORDER BOOK ==========\n";
+
+    std::cout << "\nSELL SIDE\n";
+    for(const auto& [price, orders] : sellBook)
+    {
+        std::cout
+            << "Price: "
+            << price
+            << " | Orders: "
+            << orders.size()
             << '\n';
     }
+
+    std::cout << "\nBUY SIDE\n";
+    for(const auto& [price, orders] : buyBook)
+    {
+        std::cout
+            << "Price: "
+            << price
+            << " | Orders: "
+            << orders.size()
+            << '\n';
+    }
+
+    std::cout << "===============================\n";
+}
+
+
+void OrderBook::printOrder(int orderId)
+{
+    auto it = orderMap.find(orderId);
+
+    if(it == orderMap.end())
+    {
+        std::cout << "ORDER NOT FOUND\n";
+        return;
+    }
+
+    const Order& o = it->second;
+
+    std::cout
+        << "\nORDER DETAILS\n"
+        << "ID: " << o.orderId << '\n'
+        << "PRICE: " << o.price << '\n'
+        << "QTY: " << o.quantity << '\n';
+
+    std::cout << "SIDE: ";
+
+    if(o.side == Side::BUY)
+        std::cout << "BUY\n";
+    else
+        std::cout << "SELL\n";
+
+    std::cout << "STATUS: ";
+
+    switch(o.status)
+    {
+        case OrderStatus::ACTIVE:
+            std::cout << "ACTIVE";
+            break;
+
+        case OrderStatus::PARTIALLY_FILLED:
+            std::cout << "PARTIALLY_FILLED";
+            break;
+
+        case OrderStatus::FILLED:
+            std::cout << "FILLED";
+            break;
+
+        case OrderStatus::CANCELLED:
+            std::cout << "CANCELLED";
+            break;
+    }
+
+    std::cout << "\n";
 }
