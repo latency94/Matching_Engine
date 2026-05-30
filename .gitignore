@@ -1,2 +1,4 @@
 engine
-engine
+build/
+*.o
+*.out
